@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
-class AudioInfo(BaseModel):
+class Song(BaseModel):
     title: str
-    channel: str
+    artist: str
     duration: int
     audio_url: str
     thumbnail: str
