@@ -1,24 +1,29 @@
-from yt_dlp import YoutubeDL
+import httpx
+from app.models import Song
+from typing import List
 
-def fetch_audio_info(video_id: str):
-    url = f"https://www.youtube.com/watch?v={video_id}"
-    ydl_opts = {
-        'quiet': True,
-        'format': 'ba/bestaudio/best',
-        'skip_download': True,
-        'noplaylist': True,
-        'no_warnings': True,
-        'cachedir': False,
-    }
+async def fetch_jiosaavn_results(query: str) -> List[Song]:
+    url = f"https://www.jiosaavn.com/api.php?__call=search.get_results&query={query}&count=10"
+    params = {"__call": "search.get_results", "query": query, "count": "10"}
 
-    with YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, params=params)
 
-    return {
-        "title": info.get("title"),
-        "channel": info.get("channel"),
-        "duration": info.get("duration"),
-        "audio_url": info.get("url"),
-        "thumbnail": info.get("thumbnail"),
-        "webpage_url": info.get("webpage_url"),
-    }
+    data = response.json()
+
+    if data["status"] == "ok":
+        songs = []
+        for result in data.get("results", {}).get("songs", []):
+            song = Song(
+                title=result["song"]["title"],
+                artist=result["song"]["primary_artists"],
+                duration=result["song"]["duration"],
+                audio_url=result["song"]["media_url"],
+                thumbnail=result["song"]["image"],
+                webpage_url=f"https://www.jiosaavn.com/song/{result['song']['id']}",
+            )
+            songs.append(song)
+
+        return songs
+
+    return []
