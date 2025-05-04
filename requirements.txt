@@ -1,3 +1,5 @@
 fastapi
 uvicorn
-yt-dlp
+httpx
+fuzzywuzzy
+python-Levenshtein
